@@ -9,6 +9,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -35,16 +36,30 @@ public class CameraActivity extends AppCompatActivity {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private static String logTag = "camera-activity";
     private ImageCapture imageCapture;
-    //private PreviewView previewView;
+    private int cameraSelectorLensFacing = CameraSelector.LENS_FACING_BACK;
 
+
+//    private void findTargetRotation() {
+//        int rotation = ((WindowManager) getSystemService(WINDOW_SERVICE))
+//                .getDefaultDisplay()
+//                .getRotation();
+//        switch (rotation) {
+//            case
+//        }
+//    }
 
     //private void setupCamera() throws ExecutionException, InterruptedException {
     private void setupCamera() {
-        // TODO find target rotation
+        // finds target rotation
+        int rotation = ((WindowManager) getSystemService(WINDOW_SERVICE))
+                .getDefaultDisplay()
+                .getRotation();
+
         this.imageCapture =
                 new ImageCapture.Builder()
                         //.setTargetRotation(view.getDisplay().getRotation())
-                        .setTargetRotation(Surface.ROTATION_0)
+                        //.setTargetRotation(Surface.ROTATION_0)
+                        .setTargetRotation(rotation)
                         // NOTE: "If not set, the capture mode will default to CAPTURE_MODE_MINIMIZE_LATENCY."
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                         //.setCaptureMode(ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG)
@@ -52,14 +67,16 @@ public class CameraActivity extends AppCompatActivity {
         try {
             ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
             LifecycleOwner lifecycleOwner = this;
-            // TODO control camera selection (front vs back)
+            // controls front vs back camera
             CameraSelector cameraSelector = new CameraSelector.Builder()
-                    .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                    .requireLensFacing(cameraSelectorLensFacing)
                     .build();
             Preview preview = new Preview.Builder().build();
             PreviewView previewView = findViewById(R.id.previewView);
             preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
+            // unbind previous (required for camera flip)
+            cameraProvider.unbindAll();
             cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, imageCapture, preview);
         } catch (ExecutionException e) {
             // TODO do something with the exception?
@@ -70,72 +87,6 @@ public class CameraActivity extends AppCompatActivity {
             Log.e(logTag, "setupCamera has thrown InterruptedException.");
             throw new RuntimeException(e);
         }
-    }
-
-
-    // TODO old method delete me (saving to file/IO takes too long)
-    private void takePictureAndSaveToFile() {
-        PreviewView previewView = findViewById(R.id.previewView);
-        if (imageCapture == null) {
-            Toast.makeText(this, "ImageCapture not initialized", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Save the image to a file
-        File photoFile = new File(
-                getExternalMediaDirs()[0],
-                System.currentTimeMillis() + "_photo.jpg"
-        );
-
-        ImageCapture.OutputFileOptions outputFileOptions =
-                new ImageCapture.OutputFileOptions.Builder(photoFile).build();
-
-        // NOTE: getMainExecutor() (requires API Level 28)
-        ////imageCapture.takePicture(outputFileOptions, getMainExecutor(),
-        // NOTE: Handler instead of Executor
-        //imageCapture.takePicture(outputFileOptions, new Handler(Looper.getMainLooper()),
-        // NOTE: Create an Executor using a Handler to work on the main thread
-        Executor executor = command -> new Handler(Looper.getMainLooper()).post(command);
-
-        // Use a Handler to post the callback on the main thread
-        imageCapture.takePicture(outputFileOptions, executor,
-                new ImageCapture.OnImageSavedCallback() {
-                    @Override
-                    public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
-                        Uri savedUri = Uri.fromFile(photoFile);
-                        //Log.d(logTag, "Photo captured successfully: " + savedUri);
-                        Log.d(logTag, "Photo SAVED successfully: " + savedUri);
-
-                        // You can display the image in an ImageView or handle it further
-                        ImageView previewImage = findViewById(R.id.previewImageView);
-                        previewImage.setImageURI(savedUri);
-
-                        Toast.makeText(CameraActivity.this, "Picture saved: " + savedUri, Toast.LENGTH_SHORT).show();
-                        updateViewToDisplayPreview();
-                    }
-
-                    @Override
-                    public void onError(ImageCaptureException exception) {
-                        Log.e(logTag, "Photo capture failed: " + exception.getMessage(), exception);
-                        Toast.makeText(CameraActivity.this, "Capture failed: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-        // TODO handle takePicture
-//        ImageCapture.OutputFileOptions outputFileOptions =
-//                new ImageCapture.OutputFileOptions.Builder(new File(...)).build();
-//        imageCapture.takePicture(outputFileOptions, cameraExecutor,
-//                new ImageCapture.OnImageSavedCallback() {
-//                    @Override
-//                    public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
-//                        // insert your code here.
-//                    }
-//                    @Override
-//                    public void onError(ImageCaptureException error) {
-//                        // insert your code here.
-//                    }
-//                }
-//        );
     }
 
 
@@ -193,7 +144,14 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+    private void cameraFlip() {
+        this.cameraSelectorLensFacing = (cameraSelectorLensFacing == CameraSelector.LENS_FACING_BACK) ? CameraSelector.LENS_FACING_FRONT : CameraSelector.LENS_FACING_BACK;
+        setupCamera();
+    }
+
+
     private void updateViewToDisplayPreview() {
+        // TODO fix rotation for preview
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -274,6 +232,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.v(logTag, "imageButtonSwitchCamera onClick");
+                cameraFlip();
             }
         });
         findViewById(R.id.imageButtonNo).setOnClickListener(new View.OnClickListener() {
@@ -288,6 +247,13 @@ public class CameraActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.v(logTag, "imageButtonYes onClick");
                 photoPreviewConfirm();
+            }
+        });
+        findViewById(R.id.imageButtonCancel).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO actions for cancel?
+                finish();
             }
         });
 
