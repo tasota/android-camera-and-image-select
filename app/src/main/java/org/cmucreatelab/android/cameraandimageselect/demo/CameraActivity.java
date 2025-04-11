@@ -1,5 +1,6 @@
 package org.cmucreatelab.android.cameraandimageselect.demo;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -226,6 +227,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.v(logTag, "imageButtonFolder onClick");
+                imageChooser();
             }
         });
         findViewById(R.id.imageButtonSwitchCamera).setOnClickListener(new View.OnClickListener() {
@@ -274,6 +276,61 @@ public class CameraActivity extends AppCompatActivity {
         });
 
         setupCamera();
+    }
+
+
+    // image picker stuff
+    // ... (taken from https://www.geeksforgeeks.org/how-to-select-an-image-from-gallery-in-android/)
+    // other options
+    // https://developer.android.com/training/data-storage/shared/photopicker#java
+
+    // constant to compare
+    // the activity result code
+    int SELECT_PICTURE = 200;
+
+    // this function is triggered when
+    // the Select Image Button is clicked
+    private void imageChooser() {
+
+        // create an instance of the
+        // intent of the type image
+        Intent i = new Intent();
+        i.setType("image/*");
+        i.setAction(Intent.ACTION_GET_CONTENT);
+
+        // pass the constant to compare it
+        // with the returned requestCode
+        startActivityForResult(
+                Intent.createChooser(i, "Select Picture"),
+                SELECT_PICTURE);
+    }
+
+    // this function is triggered when user
+    // selects the image from the imageChooser
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode,
+                data);
+
+        if (resultCode == RESULT_OK) {
+
+            // compare the resultCode with the
+            // SELECT_PICTURE constant
+            if (requestCode == SELECT_PICTURE) {
+                // Get the url of the image from data
+                Uri selectedImageUri = data.getData();
+                if (null != selectedImageUri) {
+                    Log.i(logTag, "onActivityResult got result with selectedImageUri");
+//                    // update the preview image in the
+//                    // layout
+//                    IVPreviewImage.setImageURI(
+//                            selectedImageUri);
+                    // NOTE: already on UI Thread
+                    ImageView previewImage = findViewById(R.id.previewImageView);
+                    previewImage.setImageURI(selectedImageUri);
+                    updateViewToDisplayPreview();
+                }
+            }
+        }
     }
 
 }
