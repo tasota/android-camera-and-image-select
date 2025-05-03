@@ -2,6 +2,7 @@ package org.cmucreatelab.android.cameraandimageselect.demo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -10,7 +11,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -29,7 +29,6 @@ import androidx.lifecycle.LifecycleOwner;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -37,6 +36,12 @@ import java.util.concurrent.Executor;
 public class CameraActivity extends AppCompatActivity {
 
     public static String RESULT_INTENT_EXTRA_IMAGE_URI = "image_uri";
+
+    public enum CameraActivityState {
+        VIEW_CAMERA,
+        VIEW_PREVIEW_FROM_CAMERA,
+        VIEW_PREVIEW_FROM_FILE
+    }
 
     private static String logTag = "camera-activity";
 
@@ -47,6 +52,7 @@ public class CameraActivity extends AppCompatActivity {
 //    // TODO remove this "global" (or conform to either-or camera vs imagepicker)
 //    private Uri imageUriFromFile = null;
     private CameraActivityIntentHandler intentHandler = null;
+    private CameraActivityState cameraActivityState;
 
 
 //    private void findTargetRotation() {
@@ -153,7 +159,9 @@ public class CameraActivity extends AppCompatActivity {
                                 intentHandler.updateResult(bitmap);
                             }
                         });
-                        updateViewToDisplayPreview();
+                        //updateViewToDisplayPreview();
+                        CameraActivity.this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
+                        doViewPreviewFromCamera();
                     }
 
                     @Override
@@ -179,9 +187,11 @@ public class CameraActivity extends AppCompatActivity {
             public void run() {
                 findViewById(R.id.previewView).setVisibility(View.GONE);
                 findViewById(R.id.captureButton).setVisibility(View.GONE);
+                findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.GONE);
                 findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
                 findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
                 findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
+
             }
         });
     }
@@ -193,6 +203,7 @@ public class CameraActivity extends AppCompatActivity {
             public void run() {
                 findViewById(R.id.previewView).setVisibility(View.VISIBLE);
                 findViewById(R.id.captureButton).setVisibility(View.VISIBLE);
+                findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.VISIBLE);
                 findViewById(R.id.previewImageView).setVisibility(View.GONE);
                 findViewById(R.id.imageButtonNo).setVisibility(View.GONE);
                 findViewById(R.id.imageButtonYes).setVisibility(View.GONE);
@@ -202,8 +213,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void photoPreviewRetake() {
-        // TODO not necessary to call again?
-        //setupCamera();
+        this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
         updateViewToDisplayLiveCamera();
     }
 
@@ -224,6 +234,33 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+    private void doViewPreviewFromCamera() {
+        this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
+        updateViewToDisplayPreview();
+    }
+
+
+    private void doViewPreviewFromFile() {
+        this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_FILE;
+        updateViewToDisplayPreview();
+    }
+
+
+    // detects screen rotation without restarting activity (i.e. does not call onCreate method)
+    // requires ``android:configChanges="orientation|screenSize"`` in AndroidManifest
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Log.d(logTag, "Landscape");
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            Log.d(logTag, "Portrait");
+        }
+    }
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -239,6 +276,7 @@ public class CameraActivity extends AppCompatActivity {
 //        });
 
         this.intentHandler = new CameraActivityIntentHandler();
+        this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
     }
 
 
@@ -287,7 +325,21 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-        setupCamera();
+        switch (cameraActivityState) {
+            case VIEW_CAMERA:
+                setupCamera();
+                break;
+            case VIEW_PREVIEW_FROM_CAMERA:
+                doViewPreviewFromCamera();
+                break;
+            case VIEW_PREVIEW_FROM_FILE:
+                doViewPreviewFromFile();
+                break;
+            default:
+                Log.w(logTag, "could not determine cameraActivityState; default to VIEW_CAMERA.");
+                this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
+                setupCamera();
+        }
     }
 
 
@@ -342,7 +394,8 @@ public class CameraActivity extends AppCompatActivity {
                     // NOTE: already on UI Thread
                     ImageView previewImage = findViewById(R.id.previewImageView);
                     previewImage.setImageURI(selectedImageUri);
-                    updateViewToDisplayPreview();
+                    //updateViewToDisplayPreview();
+                    doViewPreviewFromFile();
                 }
             }
         }
