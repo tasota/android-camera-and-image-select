@@ -1,5 +1,6 @@
 package org.cmucreatelab.android.cameraandimageselect.demo;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -34,10 +35,17 @@ import java.util.concurrent.Executor;
 
 public class CameraActivity extends AppCompatActivity {
 
-    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    public static String RESULT_INTENT_EXTRA_IMAGE_URI = "image_uri";
+
     private static String logTag = "camera-activity";
+
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
     private int cameraSelectorLensFacing = CameraSelector.LENS_FACING_BACK;
+
+//    // TODO remove this "global" (or conform to either-or camera vs imagepicker)
+//    private Uri imageUriFromFile = null;
+    private CameraActivityIntentHandler intentHandler = null;
 
 
 //    private void findTargetRotation() {
@@ -102,20 +110,20 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void takePictureAndAccessFromMemory() {
-        PreviewView previewView = findViewById(R.id.previewView);
+        //PreviewView previewView = findViewById(R.id.previewView);
         if (imageCapture == null) {
             Toast.makeText(this, "ImageCapture not initialized", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Save the image to a file
-        File photoFile = new File(
-                getExternalMediaDirs()[0],
-                System.currentTimeMillis() + "_photo.jpg"
-        );
+//        // Save the image to a file
+//        File photoFile = new File(
+//                getExternalMediaDirs()[0],
+//                System.currentTimeMillis() + "_photo.jpg"
+//        );
 
-        ImageCapture.OutputFileOptions outputFileOptions =
-                new ImageCapture.OutputFileOptions.Builder(photoFile).build();
+//        ImageCapture.OutputFileOptions outputFileOptions =
+//                new ImageCapture.OutputFileOptions.Builder(photoFile).build();
 
         Executor executor = command -> new Handler(Looper.getMainLooper()).post(command);
 
@@ -129,7 +137,9 @@ public class CameraActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 ImageView previewImage = findViewById(R.id.previewImageView);
-                                previewImage.setImageBitmap(imageProxyToBitmap(image));
+                                Bitmap bitmap = imageProxyToBitmap(image);
+                                previewImage.setImageBitmap(bitmap);
+                                intentHandler.updateResult(bitmap);
                             }
                         });
                         updateViewToDisplayPreview();
@@ -159,9 +169,6 @@ public class CameraActivity extends AppCompatActivity {
                 findViewById(R.id.previewView).setVisibility(View.GONE);
                 findViewById(R.id.captureButton).setVisibility(View.GONE);
                 findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
-                findViewById(R.id.confirmButton).setVisibility(View.VISIBLE);
-                findViewById(R.id.retakeButton).setVisibility(View.VISIBLE);
-
                 findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
                 findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
             }
@@ -176,14 +183,12 @@ public class CameraActivity extends AppCompatActivity {
                 findViewById(R.id.previewView).setVisibility(View.VISIBLE);
                 findViewById(R.id.captureButton).setVisibility(View.VISIBLE);
                 findViewById(R.id.previewImageView).setVisibility(View.GONE);
-                findViewById(R.id.confirmButton).setVisibility(View.GONE);
-                findViewById(R.id.retakeButton).setVisibility(View.GONE);
-
                 findViewById(R.id.imageButtonNo).setVisibility(View.GONE);
                 findViewById(R.id.imageButtonYes).setVisibility(View.GONE);
             }
         });
     }
+
 
     private void photoPreviewRetake() {
         // TODO not necessary to call again?
@@ -191,8 +196,19 @@ public class CameraActivity extends AppCompatActivity {
         updateViewToDisplayLiveCamera();
     }
 
+
     private void photoPreviewConfirm() {
-        // TODO finish activity (with image as result?)
+        Uri resultUri = intentHandler.getResultUri(getApplicationContext());
+        finishActivityWithResult(Activity.RESULT_OK, resultUri);
+    }
+
+
+    private void finishActivityWithResult(int resultCode, Uri resultUri) {
+        Intent resultIntent = new Intent();
+        if (resultUri != null) {
+            resultIntent.putExtra(RESULT_INTENT_EXTRA_IMAGE_URI, resultUri);
+        }
+        setResult(resultCode, resultIntent);
         finish();
     }
 
@@ -210,6 +226,8 @@ public class CameraActivity extends AppCompatActivity {
 //            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
 //            return insets;
 //        });
+
+        this.intentHandler = new CameraActivityIntentHandler();
     }
 
 
@@ -254,24 +272,7 @@ public class CameraActivity extends AppCompatActivity {
         findViewById(R.id.imageButtonCancel).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO actions for cancel?
-                finish();
-            }
-        });
-
-        // TODO demo buttons, remove later
-        findViewById(R.id.retakeButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.v(logTag, "retakeButton onClick");
-                photoPreviewRetake();
-            }
-        });
-        findViewById(R.id.confirmButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.v(logTag, "confirmButton onClick");
-                photoPreviewConfirm();
+                finishActivityWithResult(Activity.RESULT_CANCELED, null);
             }
         });
 
@@ -320,6 +321,9 @@ public class CameraActivity extends AppCompatActivity {
                 Uri selectedImageUri = data.getData();
                 if (null != selectedImageUri) {
                     Log.i(logTag, "onActivityResult got result with selectedImageUri");
+                    // TODO temp (demo)
+                    //this.intentHandler.imageUriFromFile = selectedImageUri;
+                    intentHandler.updateResult(selectedImageUri);
 //                    // update the preview image in the
 //                    // layout
 //                    IVPreviewImage.setImageURI(

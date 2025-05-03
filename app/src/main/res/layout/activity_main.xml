@@ -18,9 +18,15 @@
 
         <Button
             android:id="@+id/buttonActivity"
-            android:text="Launch Activity"
+            android:text="Launch Activity for Image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
 
     </LinearLayout>
 
