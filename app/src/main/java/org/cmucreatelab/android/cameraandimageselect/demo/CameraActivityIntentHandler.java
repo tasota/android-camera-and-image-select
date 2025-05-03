@@ -7,9 +7,6 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import androidx.annotation.NonNull;
-import androidx.core.content.FileProvider;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,37 +14,24 @@ import java.io.IOException;
 
 public class CameraActivityIntentHandler implements Parcelable {
 
-    // ...attributes
+    private static String temporaryFilePrefix = "imagepicker_shared";
+
+    private static String temporaryFileSuffix = ".png";
+
     public Uri imageUriFromFile = null;
     public Bitmap imageBitmapFromCamera = null;
-
-    // i.e. "~app/cache-folder-name/images"
-    private static String subdirOfAppSpecificCacheDirectory = "images";
-    private static String filenameForTemporaryFile = "imagepicker_shared.png";
 
 
     // TODO you are responsible for deleting this (overwrite itself for now, limits to 1 file)
     private static File getTemporaryFileFromCache(Context context) throws Exception {
         File outputDir = context.getCacheDir(); // context being the Activity pointer
         try {
-            File outputFile = File.createTempFile("imagepicker_shared", ".png", outputDir);
+            File outputFile = File.createTempFile(temporaryFilePrefix, temporaryFileSuffix, outputDir);
             return outputFile;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
-    }
-    private static File getTemporaryFileFromCacheOld(Context context) throws Exception {
-        File imagesFolder = new File(context.getCacheDir(), subdirOfAppSpecificCacheDirectory);
-        boolean allDirectoriesCreated = imagesFolder.mkdirs(); // Create the folder if it doesn't exist
-        if (allDirectoriesCreated) {
-            return new File(imagesFolder, filenameForTemporaryFile);
-        } else {
-            // TODO class extends Exception
-            throw new Exception("Failed to create all directories for temporary file in cache directory");
-        }
-
-//        return new File(imagesFolder, filenameForTemporaryFile);
     }
 
 
@@ -63,16 +47,6 @@ public class CameraActivityIntentHandler implements Parcelable {
             stream.close();
 
             return Uri.fromFile(file);
-
-            // NOTE: providers only needed when sharing with other apps
-            // ... also, if you go down this path, you must define a <provider> in AndroidManifest (nested in <application>) and a path in a resource e.g. res/xml/file_paths.xml
-            // https://developer.android.com/training/secure-file-sharing/setup-sharing
-//            // Get URI using FileProvider (required for Android 7.0+)
-//            return FileProvider.getUriForFile(context, "org.cmucreatelab.android.cameraandimageselect.demo.fileprovider", file);
-
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
