@@ -370,6 +370,7 @@ public class CameraActivity extends AppCompatActivity {
         // save on rotation changes only; do not save instance state when leaving the activity (or else the Parcel is too large?)
         if (isChangingConfigurations()) {
             outState.putString("camera_state", cameraActivityState.name());
+            outState.putInt("camera_lens", cameraSelectorLensFacing);
             outState.putParcelable("intent_handler", intentHandler);
         }
     }
@@ -383,6 +384,8 @@ public class CameraActivity extends AppCompatActivity {
         String stateName = savedInstanceState.getString("camera_state");
         Log.d(logTag, String.format("restoring cameraActivityState name=%s", stateName));
         this.cameraActivityState = CameraActivityState.valueOf(stateName);
+
+        this.cameraSelectorLensFacing = savedInstanceState.getInt("camera_lens");
 
         // NOTE: requires API level 33+, but who needs type safety at compile time anyways?
         //this.intentHandler = savedInstanceState.getParcelable("intent_handler", CameraActivityIntentHandler.class);
