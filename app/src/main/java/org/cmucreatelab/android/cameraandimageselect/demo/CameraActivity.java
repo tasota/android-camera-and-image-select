@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -99,12 +100,22 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+    private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotationDegrees);
+        return Bitmap.createBitmap(bitmap, 0, 0,
+                bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+    }
+
+
     private Bitmap imageProxyToBitmap(ImageProxy image) {
         ImageProxy.PlaneProxy plane = image.getPlanes()[0];
+        int rotationDegrees = image.getImageInfo().getRotationDegrees();
         ByteBuffer buffer = plane.getBuffer();
         byte[] bytes = new byte[buffer.remaining()];
         buffer.get(bytes);
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        Bitmap unrotatedBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        return rotateBitmap(unrotatedBitmap, rotationDegrees);
     }
 
 
