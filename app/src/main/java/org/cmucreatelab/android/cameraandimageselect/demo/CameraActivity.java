@@ -107,6 +107,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private Bitmap rotateBitmap(Bitmap bitmap, int rotationDegrees) {
+        Log.d(logTag, String.format("rotating bitmap by %d degrees", rotationDegrees));
         Matrix matrix = new Matrix();
         matrix.postRotate(rotationDegrees);
         return Bitmap.createBitmap(bitmap, 0, 0,
@@ -176,7 +177,7 @@ public class CameraActivity extends AppCompatActivity {
 
     private void cameraFlip() {
         this.cameraSelectorLensFacing = (cameraSelectorLensFacing == CameraSelector.LENS_FACING_BACK) ? CameraSelector.LENS_FACING_FRONT : CameraSelector.LENS_FACING_BACK;
-        setupCamera();
+        doViewCamera();
     }
 
 
@@ -213,8 +214,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void photoPreviewRetake() {
-        this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
-        updateViewToDisplayLiveCamera();
+        doViewCamera();
     }
 
 
@@ -234,6 +234,13 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+    private void doViewCamera() {
+        this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
+        setupCamera();
+        updateViewToDisplayLiveCamera();
+    }
+
+
     private void doViewPreviewFromCamera() {
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
         updateViewToDisplayPreview();
@@ -243,6 +250,24 @@ public class CameraActivity extends AppCompatActivity {
     private void doViewPreviewFromFile() {
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_FILE;
         updateViewToDisplayPreview();
+    }
+
+
+    private void updateWithCameraState() {
+        switch (cameraActivityState) {
+            case VIEW_CAMERA:
+                doViewCamera();
+                break;
+            case VIEW_PREVIEW_FROM_CAMERA:
+                doViewPreviewFromCamera();
+                break;
+            case VIEW_PREVIEW_FROM_FILE:
+                doViewPreviewFromFile();
+                break;
+            default:
+                Log.w(logTag, "could not determine cameraActivityState; default to VIEW_CAMERA.");
+                doViewCamera();
+        }
     }
 
 
@@ -257,6 +282,7 @@ public class CameraActivity extends AppCompatActivity {
         } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             Log.d(logTag, "Portrait");
         }
+        updateWithCameraState();
     }
 
 
@@ -325,21 +351,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-        switch (cameraActivityState) {
-            case VIEW_CAMERA:
-                setupCamera();
-                break;
-            case VIEW_PREVIEW_FROM_CAMERA:
-                doViewPreviewFromCamera();
-                break;
-            case VIEW_PREVIEW_FROM_FILE:
-                doViewPreviewFromFile();
-                break;
-            default:
-                Log.w(logTag, "could not determine cameraActivityState; default to VIEW_CAMERA.");
-                this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
-                setupCamera();
-        }
+        updateWithCameraState();
     }
 
 
