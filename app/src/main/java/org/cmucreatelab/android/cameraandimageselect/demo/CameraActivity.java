@@ -39,6 +39,7 @@ public class CameraActivity extends AppCompatActivity {
 
     public enum CameraActivityState {
         VIEW_CAMERA,
+        VIEW_IMAGE_CHOOSER,
         VIEW_PREVIEW_FROM_CAMERA,
         VIEW_PREVIEW_FROM_FILE
     }
@@ -52,7 +53,7 @@ public class CameraActivity extends AppCompatActivity {
 //    // TODO remove this "global" (or conform to either-or camera vs imagepicker)
 //    private Uri imageUriFromFile = null;
     private CameraActivityIntentHandler intentHandler = null;
-    private CameraActivityState cameraActivityState;
+    private CameraActivityState cameraActivityState = CameraActivityState.VIEW_CAMERA;
 
 
 //    private void findTargetRotation() {
@@ -151,15 +152,17 @@ public class CameraActivity extends AppCompatActivity {
                     @Override
                     public void onCaptureSuccess(@NonNull ImageProxy image) {
                         Log.d(logTag, "Photo captured successfully");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                ImageView previewImage = findViewById(R.id.previewImageView);
-                                Bitmap bitmap = imageProxyToBitmap(image);
-                                previewImage.setImageBitmap(bitmap);
-                                intentHandler.updateResult(bitmap);
-                            }
-                        });
+//                        runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+////                                ImageView previewImage = findViewById(R.id.previewImageView);
+//                                Bitmap bitmap = imageProxyToBitmap(image);
+////                                previewImage.setImageBitmap(bitmap);
+//                                intentHandler.updateResult(bitmap);
+//                            }
+//                        });
+                        Bitmap bitmap = imageProxyToBitmap(image);
+                        intentHandler.updateResult(bitmap);
                         //updateViewToDisplayPreview();
                         CameraActivity.this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
                         doViewPreviewFromCamera();
@@ -241,14 +244,35 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+    private void doViewImageChooser() {
+        this.cameraActivityState = CameraActivityState.VIEW_IMAGE_CHOOSER;
+        imageChooser();
+
+    }
+
+
     private void doViewPreviewFromCamera() {
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ImageView previewImage = findViewById(R.id.previewImageView);
+                previewImage.setImageBitmap(intentHandler.imageBitmapFromCamera);
+            }
+        });
         updateViewToDisplayPreview();
     }
 
 
     private void doViewPreviewFromFile() {
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_FILE;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ImageView previewImage = findViewById(R.id.previewImageView);
+                previewImage.setImageURI(intentHandler.imageUriFromFile);
+            }
+        });
         updateViewToDisplayPreview();
     }
 
@@ -271,44 +295,7 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
-    // detects screen rotation without restarting activity (i.e. does not call onCreate method)
-    // requires ``android:configChanges="orientation|screenSize"`` in AndroidManifest
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Log.d(logTag, "Landscape");
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            Log.d(logTag, "Portrait");
-        }
-        updateWithCameraState();
-    }
-
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        //EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_camera);
-
-        // TODO handle run-time permissions (here, or onResume?)
-        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-//            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-//            return insets;
-//        });
-
-        this.intentHandler = new CameraActivityIntentHandler();
-        this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
-    }
-
-
-    @Override
-    protected void onResume() {
-        super.onResume();
+    private void initializeViewOnClickListeners() {
         findViewById(R.id.captureButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -320,7 +307,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.v(logTag, "imageButtonFolder onClick");
-                imageChooser();
+                doViewImageChooser();
             }
         });
         findViewById(R.id.imageButtonSwitchCamera).setOnClickListener(new View.OnClickListener() {
@@ -350,7 +337,85 @@ public class CameraActivity extends AppCompatActivity {
                 finishActivityWithResult(Activity.RESULT_CANCELED, null);
             }
         });
+    }
 
+
+//    // detects screen rotation without restarting activity (i.e. does not call onCreate method)
+//    // requires ``android:configChanges="orientation|screenSize"`` in AndroidManifest
+//    @Override
+//    public void onConfigurationChanged(Configuration newConfig) {
+//        super.onConfigurationChanged(newConfig);
+//        Log.v(logTag, "onConfigurationChanged");
+//
+//        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+//            Log.d(logTag, "Landscape");
+//        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
+//            Log.d(logTag, "Portrait");
+//        }
+//        updateWithCameraState();
+//    }
+
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Log.v(logTag, "onSaveInstanceState");
+        Log.v(logTag, String.format("onSaveInstanceState.isChangingConfigurations = %b", isChangingConfigurations()));
+
+//        // NOTE: Kind of hacky, but we want to avoid saving/restoring when we leave the activity because of the image chooser
+//        if (cameraActivityState != CameraActivityState.VIEW_IMAGE_CHOOSER) {
+//            outState.putString("camera_state", cameraActivityState.name());
+//            outState.putParcelable("intent_handler", intentHandler);
+//        }
+        // save on rotation changes only; do not save instance state when leaving the activity (or else the Parcel is too large?)
+        if (isChangingConfigurations()) {
+            outState.putString("camera_state", cameraActivityState.name());
+            outState.putParcelable("intent_handler", intentHandler);
+        }
+    }
+
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        Log.v(logTag, "onRestoreInstanceState");
+
+        String stateName = savedInstanceState.getString("camera_state");
+        Log.d(logTag, String.format("restoring cameraActivityState name=%s", stateName));
+        this.cameraActivityState = CameraActivityState.valueOf(stateName);
+
+        // NOTE: requires API level 33+, but who needs type safety at compile time anyways?
+        //this.intentHandler = savedInstanceState.getParcelable("intent_handler", CameraActivityIntentHandler.class);
+        this.intentHandler = savedInstanceState.getParcelable("intent_handler");
+    }
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.v(logTag, "onCreate");
+        //EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_camera);
+
+        // TODO handle run-time permissions (here, or onResume?)
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+//            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+//            return insets;
+//        });
+
+        this.intentHandler = new CameraActivityIntentHandler();
+        //this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
+        //updateWithCameraState();
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.v(logTag, "onResume");
+        initializeViewOnClickListeners();
         updateWithCameraState();
     }
 
@@ -404,8 +469,8 @@ public class CameraActivity extends AppCompatActivity {
 //                    IVPreviewImage.setImageURI(
 //                            selectedImageUri);
                     // NOTE: already on UI Thread
-                    ImageView previewImage = findViewById(R.id.previewImageView);
-                    previewImage.setImageURI(selectedImageUri);
+//                    ImageView previewImage = findViewById(R.id.previewImageView);
+//                    previewImage.setImageURI(selectedImageUri);
                     //updateViewToDisplayPreview();
                     doViewPreviewFromFile();
                 }
