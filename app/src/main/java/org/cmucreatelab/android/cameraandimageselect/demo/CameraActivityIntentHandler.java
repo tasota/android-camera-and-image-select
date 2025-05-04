@@ -8,50 +8,11 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 public class CameraActivityIntentHandler implements Parcelable {
 
-    private static String temporaryFilePrefix = "imagepicker_shared";
-
-    private static String temporaryFileSuffix = ".png";
-
     public Uri imageUriFromFile = null;
     public Bitmap imageBitmapFromCamera = null;
-
-
-    // TODO you are responsible for deleting this (overwrite itself for now, limits to 1 file)
-    private static File getTemporaryFileFromCache(Context context) throws Exception {
-        File outputDir = context.getCacheDir(); // context being the Activity pointer
-        try {
-            File outputFile = File.createTempFile(temporaryFilePrefix, temporaryFileSuffix, outputDir);
-            return outputFile;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-
-    private Uri createUriFromBitmap(Context context, Bitmap bitmap) {
-        try {
-            File file = getTemporaryFileFromCache(context);
-
-            // Write the Bitmap to the file
-            // TODO Add a spinner since this takes a long time (several seconds)
-            FileOutputStream stream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-            stream.flush();
-            stream.close();
-
-            return Uri.fromFile(file);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
 
     public void updateResult(Uri uri) {
@@ -71,7 +32,8 @@ public class CameraActivityIntentHandler implements Parcelable {
         if (imageUriFromFile != null) {
             result = imageUriFromFile;
         } else if (imageBitmapFromCamera != null) {
-            result = createUriFromBitmap(context, imageBitmapFromCamera);
+            // TODO Add a spinner since this takes a long time (several seconds)
+            result = BitmapUtil.createUriFromBitmap(context, imageBitmapFromCamera);
         }
         return result;
     }
