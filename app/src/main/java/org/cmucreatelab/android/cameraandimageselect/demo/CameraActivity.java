@@ -299,7 +299,7 @@ public class CameraActivity extends AppCompatActivity {
         Log.v(logTag, "onCreate");
         setContentView(R.layout.activity_camera);
 
-        // TODO handle run-time permissions (here, or onResume?)
+        // TODO handle run-time permissions (here, or onResume?) (note: this is already handled in StudentUpdateAbstractActivity)
         this.cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
         this.intentHandler = new CameraActivityIntentHandler();

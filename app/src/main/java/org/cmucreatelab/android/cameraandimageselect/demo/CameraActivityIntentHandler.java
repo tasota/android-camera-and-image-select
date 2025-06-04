@@ -33,6 +33,7 @@ public class CameraActivityIntentHandler implements Parcelable {
             result = imageUriFromFile;
         } else if (imageBitmapFromCamera != null) {
             // TODO Add a spinner since this takes a long time (several seconds)
+            // TODO Camera Activity setVisibility on "indeterminateBar"
             result = BitmapUtil.createUriFromBitmap(context, imageBitmapFromCamera);
         }
         return result;
