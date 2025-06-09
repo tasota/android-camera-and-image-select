@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class CameraActivity extends AppCompatActivity {
 
@@ -46,6 +47,7 @@ public class CameraActivity extends AppCompatActivity {
     private int cameraSelectorLensFacing = CameraSelector.LENS_FACING_BACK;
     private CameraActivityIntentHandler intentHandler = null;
     private CameraActivityState cameraActivityState = CameraActivityState.VIEW_CAMERA;
+    private ConfirmationButtonsView confirmationButtonsView;
 
     // Transient attrs
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
@@ -136,20 +138,7 @@ public class CameraActivity extends AppCompatActivity {
             findViewById(R.id.captureButton).setVisibility(View.GONE);
             findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.GONE);
             findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
-            findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
-            findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
-        });
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.previewView).setVisibility(View.GONE);
-                findViewById(R.id.captureButton).setVisibility(View.GONE);
-                findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.GONE);
-                findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
-                findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
-                findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
-
-            }
+            confirmationButtonsView.setVisibility(View.VISIBLE);
         });
     }
 
@@ -160,8 +149,7 @@ public class CameraActivity extends AppCompatActivity {
             findViewById(R.id.captureButton).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.VISIBLE);
             findViewById(R.id.previewImageView).setVisibility(View.GONE);
-            findViewById(R.id.imageButtonNo).setVisibility(View.GONE);
-            findViewById(R.id.imageButtonYes).setVisibility(View.GONE);
+            confirmationButtonsView.setVisibility(View.GONE);
         });
     }
 
@@ -211,6 +199,9 @@ public class CameraActivity extends AppCompatActivity {
             resultIntent.putExtra(RESULT_INTENT_EXTRA_IMAGE_URI, resultUri);
         }
         setResult(resultCode, resultIntent);
+        runOnUiThread(() -> {
+            confirmationButtonsView.hideSpinner();
+        });
         finish();
     }
 
@@ -246,18 +237,26 @@ public class CameraActivity extends AppCompatActivity {
             Log.v(logTag, "imageButtonSwitchCamera onClick");
             cameraFlip();
         });
-        findViewById(R.id.imageButtonNo).setOnClickListener(v -> {
-            Log.v(logTag, "imageButtonNo onClick");
-            doViewCamera();
-        });
-        findViewById(R.id.imageButtonYes).setOnClickListener(v -> {
-            Log.v(logTag, "imageButtonYes onClick");
-            Uri resultUri = intentHandler.getResultUri(getApplicationContext());
-            finishActivityWithResult(Activity.RESULT_OK, resultUri);
-        });
         findViewById(R.id.imageButtonCancel).setOnClickListener(v -> {
             Log.v(logTag, "imageButtonCancel onClick");
             finishActivityWithResult(Activity.RESULT_CANCELED, null);
+        });
+
+        // confirmation buttons
+        confirmationButtonsView.setOnClickListenerForImageButtonNo(v -> {
+            Log.v(logTag, "imageButtonNo onClick");
+            doViewCamera();
+        });
+        confirmationButtonsView.setOnClickListenerForImageButtonYes(v -> {
+            Log.v(logTag, "imageButtonYes onClick");
+            runOnUiThread(() -> {
+                confirmationButtonsView.showSpinner();
+            });
+            // TODO we want something that can time out (or exception handling?)
+            Executors.newSingleThreadExecutor().execute(() -> {
+                Uri resultUri = intentHandler.getResultUri(getApplicationContext());
+                finishActivityWithResult(Activity.RESULT_OK, resultUri);
+            });
         });
     }
 
@@ -303,6 +302,7 @@ public class CameraActivity extends AppCompatActivity {
         this.cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
         this.intentHandler = new CameraActivityIntentHandler();
+        this.confirmationButtonsView = findViewById(R.id.confirmationButtonsView);
     }
 
 
