@@ -13,7 +13,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/imageButtonFolder"
-        app:layout_constraintBottom_toTopOf="@id/linearLayoutBottomButtons">
+        app:layout_constraintBottom_toBottomOf="parent">
     </androidx.camera.view.PreviewView>
 
 
@@ -21,10 +21,12 @@
         android:id="@+id/previewImageView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:visibility="gone"
         android:layout_margin="10dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/imageButtonFolder"
-        app:layout_constraintBottom_toTopOf="@id/linearLayoutBottomButtons"/>
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 
     <ImageButton
@@ -49,33 +51,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
-    <ImageButton
-        android:id="@+id/imageButtonNo"
-        android:layout_width="wrap_content"
+    <org.cmucreatelab.android.cameraandimageselect.demo.ConfirmationButtonsView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:src="@drawable/photo_no"
-        android:background="@null"
-        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
-
-
-    <ImageButton
-        android:id="@+id/imageButtonYes"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:scaleType="fitCenter"
-        android:src="@drawable/photo_yes"
-        android:background="@null"
-        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        />
 
 
     <LinearLayout
         android:id="@+id/linearLayoutBottomButtons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -100,12 +89,5 @@
             />
 
     </LinearLayout>
-
-    <ProgressBar
-        android:id="@+id/indeterminateBar"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
