@@ -15,6 +15,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
+
 public class MainActivity extends AppCompatActivity {
 
     private static String logTag = "main-activity";
@@ -47,6 +51,13 @@ public class MainActivity extends AppCompatActivity {
     private void onActivityResultImage(Uri uri) {
         Log.v(logTag, String.format("Got image Uri %s", uri.toString()));
         imageView.setImageURI(uri);
+        Glide.with(this)
+                .load(uri)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(imageView);
+
+
     }
 
 

@@ -12,18 +12,26 @@ import java.io.ByteArrayOutputStream;
 public class CameraActivityIntentHandler implements Parcelable {
 
     public Uri imageUriFromFile = null;
-    public Bitmap imageBitmapFromCamera = null;
+    //public Bitmap imageBitmapFromCamera = null;
+    public Uri imageUriFromCamera = null;
 
 
-    public void updateResult(Uri uri) {
-        this.imageUriFromFile = uri;
-        this.imageBitmapFromCamera = null;
+//    public void updateResult(Uri uri) {
+//        this.imageUriFromFile = uri;
+//        this.imageBitmapFromCamera = null;
+//    }
+//
+//
+//    public void updateResult(Bitmap bitmap) {
+//        this.imageUriFromFile = null;
+//        this.imageBitmapFromCamera = bitmap;
+//    }
+    public void updateCameraResult(Uri uri){
+        this.imageUriFromCamera = uri;
     }
 
-
-    public void updateResult(Bitmap bitmap) {
-        this.imageUriFromFile = null;
-        this.imageBitmapFromCamera = bitmap;
+    public void updateFileResult(Uri uri){
+        this.imageUriFromFile = uri;
     }
 
 
@@ -31,10 +39,10 @@ public class CameraActivityIntentHandler implements Parcelable {
         Uri result = null;
         if (imageUriFromFile != null) {
             result = imageUriFromFile;
-        } else if (imageBitmapFromCamera != null) {
+        } else if (imageUriFromCamera != null) {
             // TODO Add a spinner since this takes a long time (several seconds)
             // TODO Camera Activity setVisibility on "indeterminateBar"
-            result = BitmapUtil.createUriFromBitmap(context, imageBitmapFromCamera);
+            result = imageUriFromCamera;
         }
         return result;
     }
@@ -61,21 +69,22 @@ public class CameraActivityIntentHandler implements Parcelable {
 
 
     // Constructor
-    public CameraActivityIntentHandler(Uri imageUri, Bitmap imageBitmap) {
+    public CameraActivityIntentHandler(Uri imageUri, Uri cameraUri) {
         this.imageUriFromFile = imageUri;
-        this.imageBitmapFromCamera = imageBitmap;
+        this.imageUriFromCamera = cameraUri;
     }
 
 
     // Constructor for restoring from Parcel
     protected CameraActivityIntentHandler(Parcel in) {
         this.imageUriFromFile = in.readParcelable(Uri.class.getClassLoader());
+        this.imageUriFromCamera = in.readParcelable(Uri.class.getClassLoader());
 
         // Convert byte array back to Bitmap
-        byte[] bitmapByteArray = in.createByteArray();
-        if (bitmapByteArray != null) {
-            this.imageBitmapFromCamera = BitmapFactory.decodeByteArray(bitmapByteArray, 0, bitmapByteArray.length);
-        }
+//        byte[] bitmapByteArray = in.createByteArray();
+//        if (bitmapByteArray != null) {
+//            this.imageBitmapFromCamera = BitmapFactory.decodeByteArray(bitmapByteArray, 0, bitmapByteArray.length);
+//        }
     }
 
 
@@ -83,16 +92,17 @@ public class CameraActivityIntentHandler implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         // Write the Uri to Parcel
         dest.writeParcelable(imageUriFromFile, flags);
+        dest.writeParcelable(imageUriFromCamera, flags);
 
         // Convert Bitmap to byte array and write to Parcel
-        if (imageBitmapFromCamera != null) {
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            imageBitmapFromCamera.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream); // You can choose JPEG or PNG
-            byte[] bitmapByteArray = byteArrayOutputStream.toByteArray();
-            dest.writeByteArray(bitmapByteArray);
-        } else {
-            dest.writeByteArray(null); // If Bitmap is null, write null byte array
-        }
+//        if (imageBitmapFromCamera != null) {
+//            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//            imageBitmapFromCamera.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream); // You can choose JPEG or PNG
+//            byte[] bitmapByteArray = byteArrayOutputStream.toByteArray();
+//            dest.writeByteArray(bitmapByteArray);
+//        } else {
+//            dest.writeByteArray(null); // If Bitmap is null, write null byte array
+//        }
     }
 
 

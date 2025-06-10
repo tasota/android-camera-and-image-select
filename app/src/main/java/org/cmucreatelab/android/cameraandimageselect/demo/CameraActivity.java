@@ -3,6 +3,7 @@ package org.cmucreatelab.android.cameraandimageselect.demo;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,10 +23,16 @@ import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
+import androidx.core.content.FileProvider;
 import androidx.lifecycle.LifecycleOwner;
 
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
@@ -50,7 +57,6 @@ public class CameraActivity extends AppCompatActivity {
     // Transient attrs
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
-
 
     private void setupCamera() {
         // finds target rotation
@@ -103,24 +109,76 @@ public class CameraActivity extends AppCompatActivity {
         // Use a Handler to post the callback on the main thread
         Executor executor = command -> new Handler(Looper.getMainLooper()).post(command);
 
-        imageCapture.takePicture(executor,
-                new ImageCapture.OnImageCapturedCallback() {
-                    @Override
-                    public void onCaptureSuccess(@NonNull ImageProxy image) {
-                        Log.d(logTag, "Photo captured successfully");
-                        Bitmap bitmap = BitmapUtil.imageProxyToBitmap(image);
-                        intentHandler.updateResult(bitmap);
-                        CameraActivity.this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
-                        doViewPreviewFromCamera();
-                    }
+//        imageCapture.takePicture(executor,
+//                new ImageCapture.OnImageCapturedCallback() {
+//                    @Override
+//                    public void onCaptureSuccess(@NonNull ImageProxy image) {
+//                        Log.d(logTag, "Photo captured successfully");
+//                        Bitmap bitmap = BitmapUtil.imageProxyToBitmap(image);
+//
+//                        intentHandler.updateResult(bitmap);
+//                        CameraActivity.this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
+//                        doViewPreviewFromCamera();
+//                    }
+//
+//                    @Override
+//                    public void onError(@NonNull ImageCaptureException exception) {
+//                        // TODO handle error
+//                        super.onError(exception);
+//                    }
+//                }
+//        );
 
-                    @Override
-                    public void onError(@NonNull ImageCaptureException exception) {
-                        // TODO handle error
-                        super.onError(exception);
-                    }
+//        File cacheDir = getCacheDir();
+//        File[] files = cacheDir.listFiles();
+//        File oldFile = new File(getCacheDir(), "image.jpg");
+//        if (oldFile.exists()) {
+//            boolean deleted = false;
+//            Log.d("CacheCheck", "image.jpg exists");
+//            deleted = oldFile.delete();
+//            if (deleted) {
+//                Log.d("CacheCheck", "image.jpg deleted");
+//            } else {
+//                Log.d("CacheCheck", "image.jpg not deleted");
+//                Log.d("CacheCheck", Arrays.toString(files));
+//            }
+//
+//        } else {
+//            Log.d("CacheCheck", "image.jpg does not exist");
+//        }
+
+        //save camera image to file then convert to uri
+        File cameraImageFile = new File(getCacheDir(), "image.jpg");
+        ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(cameraImageFile).build();
+        imageCapture.takePicture(outputOptions, executor, new ImageCapture.OnImageSavedCallback(){
+            @Override
+            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                //intentHandler.imageUriFromCamera = outputFileResults.getSavedUri();
+                Uri savedCameraUri = outputFileResults.getSavedUri();
+                if(savedCameraUri == null){
+                    Log.v(logTag, "savedCameraUri is null creatingURI from file");
+                    savedCameraUri = FileProvider.getUriForFile(
+                            CameraActivity.this, getApplicationContext().getPackageName() + ".provider", cameraImageFile
+                    );
                 }
-        );
+                if(intentHandler.imageUriFromCamera == null)
+                {
+                    Log.e(logTag, "imageUriFromCamera is null");
+                    // ToDo handle error
+                }
+                intentHandler.imageUriFromCamera = savedCameraUri;
+                intentHandler.updateCameraResult(intentHandler.imageUriFromCamera);
+                CameraActivity.this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
+                doViewPreviewFromCamera();
+            }
+
+            @Override
+            public void onError(@NonNull ImageCaptureException exception) {
+                // TODO handle error
+                Log.e(logTag, "onImageSaved onError");
+            }
+
+        });
     }
 
 
@@ -185,7 +243,14 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void run() {
                 ImageView previewImage = findViewById(R.id.previewImageView);
-                previewImage.setImageBitmap(intentHandler.imageBitmapFromCamera);
+                Glide.with(CameraActivity.this)
+                        .load(intentHandler.imageUriFromCamera)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
+                        .into(previewImage);
+               // previewImage.setImageBitmap(intentHandler.imageBitmapFromCamera);
+
+                //previewImage.setImageURI(intentHandler.imageUriFromCamera);
             }
         });
         updateViewToDisplayPreview();
@@ -198,7 +263,12 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void run() {
                 ImageView previewImage = findViewById(R.id.previewImageView);
-                previewImage.setImageURI(intentHandler.imageUriFromFile);
+                //previewImage.setImageURI(intentHandler.imageUriFromFile);
+                Glide.with(CameraActivity.this)
+                        .load(intentHandler.imageUriFromFile)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
+                        .into(previewImage);
             }
         });
         updateViewToDisplayPreview();
@@ -324,7 +394,7 @@ public class CameraActivity extends AppCompatActivity {
                 Uri selectedImageUri = data.getData();
                 if (null != selectedImageUri) {
                     Log.i(logTag, "onActivityResult got result with selectedImageUri");
-                    intentHandler.updateResult(selectedImageUri);
+                    intentHandler.updateFileResult(selectedImageUri);
                     doViewPreviewFromFile();
                 }
             }
