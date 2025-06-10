@@ -16,6 +16,7 @@ public class CameraActivityIntentHandler implements Parcelable {
     public Uri imageUriFromCamera = null;
 
 
+    // TODO bring these back
 //    public void updateResult(Uri uri) {
 //        this.imageUriFromFile = uri;
 //        this.imageBitmapFromCamera = null;

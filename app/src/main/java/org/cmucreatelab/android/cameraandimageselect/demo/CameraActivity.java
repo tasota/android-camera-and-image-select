@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Camera;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
@@ -28,7 +30,11 @@ import androidx.lifecycle.LifecycleOwner;
 
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
@@ -190,25 +196,25 @@ public class CameraActivity extends AppCompatActivity {
 
     private void updateViewToDisplayPreview() {
         runOnUiThread(() -> {
-            findViewById(R.id.previewView).setVisibility(View.GONE);
-            findViewById(R.id.captureButton).setVisibility(View.GONE);
-            findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.GONE);
+            //findViewById(R.id.previewView).setVisibility(View.GONE);
+            findViewById(R.id.captureButton).setVisibility(View.INVISIBLE);
+            findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.INVISIBLE);
             findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
         });
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.previewView).setVisibility(View.GONE);
-                findViewById(R.id.captureButton).setVisibility(View.GONE);
-                findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.GONE);
-                findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
-                findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
-                findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
-
-            }
-        });
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                findViewById(R.id.previewView).setVisibility(View.GONE);
+//                findViewById(R.id.captureButton).setVisibility(View.GONE);
+//                findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.GONE);
+//                findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
+//                findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
+//                findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
+//
+//            }
+//        });
     }
 
 
@@ -238,22 +244,57 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void doViewPreviewFromCamera() {
+        Log.v(logTag, "doViewPreviewFromCamera");
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ImageView previewImage = findViewById(R.id.previewImageView);
-                Glide.with(CameraActivity.this)
-                        .load(intentHandler.imageUriFromCamera)
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-                        .skipMemoryCache(true)
-                        .into(previewImage);
-               // previewImage.setImageBitmap(intentHandler.imageBitmapFromCamera);
-
-                //previewImage.setImageURI(intentHandler.imageUriFromCamera);
-            }
-        });
+        // ...
+        ImageView previewImage = findViewById(R.id.previewImageView);
+        Glide.with(CameraActivity.this)
+                .load(intentHandler.imageUriFromCamera)
+//                .listener(new RequestListener<Drawable>() {
+//                    @Override
+//                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+//                        return false;
+//                    }
+//
+//                    @Override
+//                    public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+//                        Log.v(logTag, "onResourceReady");
+//                        updateViewToDisplayPreview();
+//                        return false;
+//                    }
+//                })
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(previewImage);
         updateViewToDisplayPreview();
+
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                ImageView previewImage = findViewById(R.id.previewImageView);
+//                Glide.with(CameraActivity.this)
+//                        .load(intentHandler.imageUriFromCamera)
+//                        .addListener(new RequestListener<Drawable>() {
+//                            @Override
+//                            public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+//                                return false;
+//                            }
+//
+//                            @Override
+//                            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+//                                updateViewToDisplayPreview();
+//                                return false;
+//                            }
+//                        })
+//                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+//                        .skipMemoryCache(true)
+//                        .into(previewImage);
+//               // previewImage.setImageBitmap(intentHandler.imageBitmapFromCamera);
+//
+//                //previewImage.setImageURI(intentHandler.imageUriFromCamera);
+//            }
+//        });
+//        //updateViewToDisplayPreview();
     }
 
 

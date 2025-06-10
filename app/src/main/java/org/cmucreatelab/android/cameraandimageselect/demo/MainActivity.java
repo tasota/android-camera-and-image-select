@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void onActivityResultImage(Uri uri) {
         Log.v(logTag, String.format("Got image Uri %s", uri.toString()));
-        imageView.setImageURI(uri);
+        //imageView.setImageURI(uri);
         Glide.with(this)
                 .load(uri)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
