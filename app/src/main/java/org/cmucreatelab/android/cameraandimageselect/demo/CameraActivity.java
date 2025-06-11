@@ -115,44 +115,6 @@ public class CameraActivity extends AppCompatActivity {
         // Use a Handler to post the callback on the main thread
         Executor executor = command -> new Handler(Looper.getMainLooper()).post(command);
 
-//        imageCapture.takePicture(executor,
-//                new ImageCapture.OnImageCapturedCallback() {
-//                    @Override
-//                    public void onCaptureSuccess(@NonNull ImageProxy image) {
-//                        Log.d(logTag, "Photo captured successfully");
-//                        Bitmap bitmap = BitmapUtil.imageProxyToBitmap(image);
-//
-//                        intentHandler.updateResult(bitmap);
-//                        CameraActivity.this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
-//                        doViewPreviewFromCamera();
-//                    }
-//
-//                    @Override
-//                    public void onError(@NonNull ImageCaptureException exception) {
-//                        // TODO handle error
-//                        super.onError(exception);
-//                    }
-//                }
-//        );
-
-//        File cacheDir = getCacheDir();
-//        File[] files = cacheDir.listFiles();
-//        File oldFile = new File(getCacheDir(), "image.jpg");
-//        if (oldFile.exists()) {
-//            boolean deleted = false;
-//            Log.d("CacheCheck", "image.jpg exists");
-//            deleted = oldFile.delete();
-//            if (deleted) {
-//                Log.d("CacheCheck", "image.jpg deleted");
-//            } else {
-//                Log.d("CacheCheck", "image.jpg not deleted");
-//                Log.d("CacheCheck", Arrays.toString(files));
-//            }
-//
-//        } else {
-//            Log.d("CacheCheck", "image.jpg does not exist");
-//        }
-
         //save camera image to file then convert to uri
         File cameraImageFile = new File(getCacheDir(), "image.jpg");
         ImageCapture.OutputFileOptions outputOptions = new ImageCapture.OutputFileOptions.Builder(cameraImageFile).build();
@@ -196,6 +158,7 @@ public class CameraActivity extends AppCompatActivity {
 
     private void updateViewToDisplayPreview() {
         runOnUiThread(() -> {
+            // NOTE: do not hide PreviewView (avoid black scrren)
             //findViewById(R.id.previewView).setVisibility(View.GONE);
             findViewById(R.id.captureButton).setVisibility(View.INVISIBLE);
             findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.INVISIBLE);
@@ -203,18 +166,6 @@ public class CameraActivity extends AppCompatActivity {
             findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
         });
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                findViewById(R.id.previewView).setVisibility(View.GONE);
-//                findViewById(R.id.captureButton).setVisibility(View.GONE);
-//                findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.GONE);
-//                findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
-//                findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
-//                findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
-//
-//            }
-//        });
     }
 
 
@@ -232,7 +183,12 @@ public class CameraActivity extends AppCompatActivity {
 
     private void doViewCamera() {
         this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
-        setupCamera();
+        if (imageCapture == null) {
+            Log.v(logTag, "doViewCamera found imageCapture is null, calling setupCamera()");
+            setupCamera();
+        } else {
+            Log.v(logTag, "doViewCamera skipping setupCamera");
+        }
         updateViewToDisplayLiveCamera();
     }
 
@@ -246,55 +202,13 @@ public class CameraActivity extends AppCompatActivity {
     private void doViewPreviewFromCamera() {
         Log.v(logTag, "doViewPreviewFromCamera");
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
-        // ...
         ImageView previewImage = findViewById(R.id.previewImageView);
         Glide.with(CameraActivity.this)
                 .load(intentHandler.imageUriFromCamera)
-//                .listener(new RequestListener<Drawable>() {
-//                    @Override
-//                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
-//                        return false;
-//                    }
-//
-//                    @Override
-//                    public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-//                        Log.v(logTag, "onResourceReady");
-//                        updateViewToDisplayPreview();
-//                        return false;
-//                    }
-//                })
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(true)
                 .into(previewImage);
         updateViewToDisplayPreview();
-
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                ImageView previewImage = findViewById(R.id.previewImageView);
-//                Glide.with(CameraActivity.this)
-//                        .load(intentHandler.imageUriFromCamera)
-//                        .addListener(new RequestListener<Drawable>() {
-//                            @Override
-//                            public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
-//                                return false;
-//                            }
-//
-//                            @Override
-//                            public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-//                                updateViewToDisplayPreview();
-//                                return false;
-//                            }
-//                        })
-//                        .diskCacheStrategy(DiskCacheStrategy.NONE)
-//                        .skipMemoryCache(true)
-//                        .into(previewImage);
-//               // previewImage.setImageBitmap(intentHandler.imageBitmapFromCamera);
-//
-//                //previewImage.setImageURI(intentHandler.imageUriFromCamera);
-//            }
-//        });
-//        //updateViewToDisplayPreview();
     }
 
 
