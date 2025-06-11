@@ -12,27 +12,18 @@ import java.io.ByteArrayOutputStream;
 public class CameraActivityIntentHandler implements Parcelable {
 
     public Uri imageUriFromFile = null;
-    //public Bitmap imageBitmapFromCamera = null;
     public Uri imageUriFromCamera = null;
 
 
-    // TODO bring these back
-//    public void updateResult(Uri uri) {
-//        this.imageUriFromFile = uri;
-//        this.imageBitmapFromCamera = null;
-//    }
-//
-//
-//    public void updateResult(Bitmap bitmap) {
-//        this.imageUriFromFile = null;
-//        this.imageBitmapFromCamera = bitmap;
-//    }
     public void updateCameraResult(Uri uri){
+        this.imageUriFromFile = null;
         this.imageUriFromCamera = uri;
     }
 
+
     public void updateFileResult(Uri uri){
         this.imageUriFromFile = uri;
+        this.imageUriFromCamera = null;
     }
 
 

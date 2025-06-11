@@ -158,6 +158,7 @@ public class CameraActivity extends AppCompatActivity {
 
     private void updateViewToDisplayPreview() {
         runOnUiThread(() -> {
+            // TODO we want to hide/show previewView when using the image/file picker
             // NOTE: do not hide PreviewView (avoid black scrren)
             //findViewById(R.id.previewView).setVisibility(View.GONE);
             findViewById(R.id.captureButton).setVisibility(View.INVISIBLE);
@@ -185,6 +186,7 @@ public class CameraActivity extends AppCompatActivity {
         this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
         if (imageCapture == null) {
             Log.v(logTag, "doViewCamera found imageCapture is null, calling setupCamera()");
+            // TODO we want to call this when camera flip button is clicked, but we don't want to call this when hitting the "no" button
             setupCamera();
         } else {
             Log.v(logTag, "doViewCamera skipping setupCamera");
@@ -293,6 +295,7 @@ public class CameraActivity extends AppCompatActivity {
         Log.v(logTag, "onSaveInstanceState");
 
         // save on rotation changes only; do not save instance state when leaving the activity (or else the Parcel is too large?)
+        // TODO previewImageView should switch between centerCrop and centerInside when captured image is displayed
         if (isChangingConfigurations()) {
             outState.putString("camera_state", cameraActivityState.name());
             outState.putInt("camera_lens", cameraSelectorLensFacing);
