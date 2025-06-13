@@ -2,6 +2,7 @@ package org.cmucreatelab.android.cameraandimageselect.demo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Camera;
 import android.graphics.drawable.Drawable;
@@ -63,9 +64,12 @@ public class CameraActivity extends AppCompatActivity {
     // Transient attrs
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
+    private int ogConfiguration;
+    private boolean isImageCaptured = false;
 
     private void setupCamera() {
         // finds target rotation
+        isImageCaptured = false;
         int rotation = ((WindowManager) getSystemService(WINDOW_SERVICE))
                 .getDefaultDisplay()
                 .getRotation();
@@ -137,6 +141,10 @@ public class CameraActivity extends AppCompatActivity {
                 intentHandler.imageUriFromCamera = savedCameraUri;
                 intentHandler.updateCameraResult(intentHandler.imageUriFromCamera);
                 CameraActivity.this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
+                ogConfiguration = getResources().getConfiguration().orientation;
+
+                ImageView previewImage = findViewById(R.id.previewImageView);
+                previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 doViewPreviewFromCamera();
             }
 
@@ -152,13 +160,16 @@ public class CameraActivity extends AppCompatActivity {
 
     private void cameraFlip() {
         this.cameraSelectorLensFacing = (cameraSelectorLensFacing == CameraSelector.LENS_FACING_BACK) ? CameraSelector.LENS_FACING_FRONT : CameraSelector.LENS_FACING_BACK;
+        setupCamera();
         doViewCamera();
     }
 
 
-    private void updateViewToDisplayPreview() {
+    private void    updateViewToDisplayPreview() {
         runOnUiThread(() -> {
+            //---RESOLVED----
             // TODO we want to hide/show previewView when using the image/file picker
+            //---RESOLVED----
             // NOTE: do not hide PreviewView (avoid black scrren)
             //findViewById(R.id.previewView).setVisibility(View.GONE);
             findViewById(R.id.captureButton).setVisibility(View.INVISIBLE);
@@ -166,6 +177,8 @@ public class CameraActivity extends AppCompatActivity {
             findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
+            hideSpinner();
+
         });
     }
 
@@ -186,7 +199,9 @@ public class CameraActivity extends AppCompatActivity {
         this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
         if (imageCapture == null) {
             Log.v(logTag, "doViewCamera found imageCapture is null, calling setupCamera()");
+            //---RESOLVED-----
             // TODO we want to call this when camera flip button is clicked, but we don't want to call this when hitting the "no" button
+            //----RESOLVED-----
             setupCamera();
         } else {
             Log.v(logTag, "doViewCamera skipping setupCamera");
@@ -197,11 +212,15 @@ public class CameraActivity extends AppCompatActivity {
 
     private void doViewImageChooser() {
         this.cameraActivityState = CameraActivityState.VIEW_IMAGE_CHOOSER;
+        findViewById(R.id.previewView).setVisibility(View.GONE);
         ImageChooser.launch(this);
     }
 
 
     private void doViewPreviewFromCamera() {
+
+
+        isImageCaptured = true;
         Log.v(logTag, "doViewPreviewFromCamera");
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_CAMERA;
         ImageView previewImage = findViewById(R.id.previewImageView);
@@ -211,15 +230,18 @@ public class CameraActivity extends AppCompatActivity {
                 .skipMemoryCache(true)
                 .into(previewImage);
         updateViewToDisplayPreview();
+        //hideSpinner();
     }
 
 
     private void doViewPreviewFromFile() {
+        isImageCaptured = true;
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_FILE;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 ImageView previewImage = findViewById(R.id.previewImageView);
+                updateScaleTypeAfterRotation();
                 //previewImage.setImageURI(intentHandler.imageUriFromFile);
                 Glide.with(CameraActivity.this)
                         .load(intentHandler.imageUriFromFile)
@@ -259,10 +281,47 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    //rotates the image based on changing orientation
+    private void updateScaleTypeAfterRotation() {
+        int newConfiguration = getResources().getConfiguration().orientation;
+        ImageView previewImage = findViewById(R.id.previewImageView);
+
+
+        if (newConfiguration != ogConfiguration) {
+          if(newConfiguration == Configuration.ORIENTATION_LANDSCAPE){
+              previewImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+          } else {
+              previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+          }
+
+        } else {
+            previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        }
+    }
+
+    //Sets up the camera after a rotation during image select to prevent black screen delay
+    private void handleCameraRotationSetup(){
+        int config = getResources().getConfiguration().orientation;
+        setupCamera();
+        if(config != ogConfiguration) {
+            findViewById(R.id.previewView).setVisibility(View.INVISIBLE);
+        }
+
+    }
+
+    private void showSpinner() {
+        findViewById(R.id.indeterminateBar).setVisibility(View.VISIBLE);
+    }
+
+    private void hideSpinner() {
+        findViewById(R.id.indeterminateBar).setVisibility(View.GONE);
+    }
+
 
     private void initializeViewOnClickListeners() {
         findViewById(R.id.captureButton).setOnClickListener(v -> {
             Log.v(logTag, "captureButton onClick");
+            showSpinner();
             takePictureAndAccessFromMemory();
         });
         findViewById(R.id.imageButtonFolder).setOnClickListener(v -> {
@@ -294,12 +353,16 @@ public class CameraActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         Log.v(logTag, "onSaveInstanceState");
 
-        // save on rotation changes only; do not save instance state when leaving the activity (or else the Parcel is too large?)
+        // save on rotation changes only; do not save instance state when leaving the activity (or else the Parcel is too large?)]
+        //----RESOLVED--------
         // TODO previewImageView should switch between centerCrop and centerInside when captured image is displayed
+        //------RESOLVED--------
         if (isChangingConfigurations()) {
             outState.putString("camera_state", cameraActivityState.name());
             outState.putInt("camera_lens", cameraSelectorLensFacing);
             outState.putParcelable("intent_handler", intentHandler);
+            outState.putInt("configuration", ogConfiguration);
+            outState.putBoolean("isImageCaptured", isImageCaptured);
         }
     }
 
@@ -318,6 +381,15 @@ public class CameraActivity extends AppCompatActivity {
         // NOTE: requires API level 33+, but who needs type safety at compile time anyways?
         //this.intentHandler = savedInstanceState.getParcelable("intent_handler", CameraActivityIntentHandler.class);
         this.intentHandler = savedInstanceState.getParcelable("intent_handler");
+        this.ogConfiguration = savedInstanceState.getInt("configuration");
+        this.isImageCaptured = savedInstanceState.getBoolean("isImageCaptured");
+
+        if(isImageCaptured){
+            updateScaleTypeAfterRotation();
+           handleCameraRotationSetup();
+        }
+
+
     }
 
 
@@ -353,6 +425,7 @@ public class CameraActivity extends AppCompatActivity {
                 if (null != selectedImageUri) {
                     Log.i(logTag, "onActivityResult got result with selectedImageUri");
                     intentHandler.updateFileResult(selectedImageUri);
+                    isImageCaptured=true;
                     doViewPreviewFromFile();
                 }
             }
