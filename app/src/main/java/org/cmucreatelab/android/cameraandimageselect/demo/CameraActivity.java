@@ -255,12 +255,13 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void finishActivityWithResult(int resultCode, Uri resultUri) {
-        Intent resultIntent = new Intent();
+        Intent resultIntent = new Intent(this, CircleSelectorActivity.class);
         if (resultUri != null) {
             resultIntent.putExtra(RESULT_INTENT_EXTRA_IMAGE_URI, resultUri);
         }
         setResult(resultCode, resultIntent);
-        finish();
+        startActivity(resultIntent);
+        //finish();
     }
 
 
