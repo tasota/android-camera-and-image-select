@@ -259,7 +259,8 @@ public class CameraActivity extends AppCompatActivity {
         if (resultUri != null) {
             resultIntent.putExtra(RESULT_INTENT_EXTRA_IMAGE_URI, resultUri);
         }
-        setResult(resultCode, resultIntent);
+        //setResult(resultCode, resultIntent);
+
         startActivity(resultIntent);
         //finish();
     }

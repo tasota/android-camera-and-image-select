@@ -47,6 +47,13 @@ public class CircleSelectorActivity extends AppCompatActivity {
                 }
             });
 
+    private void loadImageFromResult(){
+        Log.v(logTag, "loading Image");
+        Intent result = getIntent();
+        Uri imageUri= result.getParcelableExtra(CameraActivity.RESULT_INTENT_EXTRA_IMAGE_URI);
+        imageView.setImageURI(imageUri);
+    }
+
 
     private void onActivityResultImage(Uri uri) {
         Log.v(logTag, String.format("Got image Uri %s", uri.toString()));
@@ -74,6 +81,7 @@ public class CircleSelectorActivity extends AppCompatActivity {
         });
 
         this.imageView = findViewById(R.id.imageSelectorView);
+        loadImageFromResult();
     }
 
 
