@@ -186,6 +186,7 @@ public class CameraActivity extends AppCompatActivity {
             findViewById(R.id.previewImageView).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonNo).setVisibility(View.VISIBLE);
             findViewById(R.id.imageButtonYes).setVisibility(View.VISIBLE);
+            findViewById(R.id.imageButtonFolder).setVisibility(View.VISIBLE);
             hideSpinner();
 
         });
@@ -220,6 +221,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void doViewImageChooser() {
+
         this.cameraActivityState = CameraActivityState.VIEW_IMAGE_CHOOSER;
         findViewById(R.id.previewView).setVisibility(View.GONE);
         ImageChooser.launch(this);
@@ -250,6 +252,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void run() {
                 ImageView previewImage = findViewById(R.id.previewImageView);
+                previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 //updateScaleTypeAfterRotation();
                 //previewImage.setImageURI(intentHandler.imageUriFromFile);
                 Glide.with(CameraActivity.this)
@@ -295,16 +298,20 @@ public class CameraActivity extends AppCompatActivity {
         int newConfiguration = getResources().getConfiguration().orientation;
         ImageView previewImage = findViewById(R.id.previewImageView);
 
+        if(intentHandler.imageUriFromFile == null) {
+            if (newConfiguration != ogConfiguration) {
+                if (newConfiguration == Configuration.ORIENTATION_LANDSCAPE) {
+                    previewImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                } else {
+                    previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                }
 
-        if (newConfiguration != ogConfiguration) {
-          if(newConfiguration == Configuration.ORIENTATION_LANDSCAPE){
-              previewImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-          } else {
-              previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
-          }
-
+            } else {
+                previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            }
         } else {
-            previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            ogConfiguration = newConfiguration;
         }
     }
 
@@ -312,7 +319,8 @@ public class CameraActivity extends AppCompatActivity {
     private void handleCameraRotationSetup(){
         int config = getResources().getConfiguration().orientation;
         setupCamera();
-        if(config != ogConfiguration) {
+
+        if(config != ogConfiguration || intentHandler.imageUriFromFile != null) {
             findViewById(R.id.previewView).setVisibility(View.INVISIBLE);
         }
 
@@ -321,93 +329,12 @@ public class CameraActivity extends AppCompatActivity {
     private void showSpinner() {
         findViewById(R.id.captureButton).setVisibility(View.INVISIBLE);
         findViewById(R.id.imageButtonSwitchCamera).setVisibility(View.INVISIBLE);
+        findViewById(R.id.imageButtonFolder).setVisibility(View.GONE);
         findViewById(R.id.indeterminateBar).setVisibility(View.VISIBLE);
     }
 
     private void hideSpinner() {
         findViewById(R.id.indeterminateBar).setVisibility(View.GONE);
-    }
-
-    private File copyUriToTempFile() throws IOException {
-        InputStream inputStream = getContentResolver().openInputStream(intentHandler.imageUriFromFile);
-        File tempFile = File.createTempFile("temp_image", null, getCacheDir());
-        tempFile.deleteOnExit();
-
-        OutputStream outputStream = new FileOutputStream(tempFile);
-
-        byte[] buffer = new byte[4096];
-        int read;
-        while ((read = inputStream.read(buffer)) != -1) {
-            outputStream.write(buffer, 0, read);
-        }
-
-        outputStream.flush();
-        outputStream.close();
-        inputStream.close();
-
-        return tempFile;
-    }
-
-    public boolean isPortrait() throws FileNotFoundException {
-        //get exif orientation
-        try {
-            File tempFile = copyUriToTempFile();
-            ExifInterface exif = new ExifInterface(tempFile.getAbsolutePath());
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-
-            //get bitmap width and height
-            InputStream inputStream = getContentResolver().openInputStream(intentHandler.imageUriFromFile);
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            int height = bitmap.getHeight();
-            int width = bitmap.getWidth();
-
-            //determine if need to switch width and height
-            if (orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
-                    orientation == ExifInterface.ORIENTATION_ROTATE_270 ||
-                    orientation == ExifInterface.ORIENTATION_TRANSPOSE ||
-                    orientation == ExifInterface.ORIENTATION_TRANSVERSE) {
-                // Swap width and height
-                int temp = width;
-                width = height;
-                height = temp;
-                tempFile.delete();
-
-                return width < height;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-
-        }
-
-        return false;
-    }
-
-    //set scale type based on file image orientation and device orientation
-    private void handleFileRotation() throws FileNotFoundException {
-        ImageView previewImage = findViewById(R.id.previewImageView);
-        int config = getResources().getConfiguration().orientation;
-
-//        if(isPortrait()){
-//            ogConfiguration = Configuration.ORIENTATION_PORTRAIT;
-//        } else {
-//            ogConfiguration = Configuration.ORIENTATION_LANDSCAPE;
-//        }
-
-        ogConfiguration = -1;
-
-        if(isPortrait() && (config == Configuration.ORIENTATION_LANDSCAPE)){
-            previewImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        } else if(isPortrait() && (config == Configuration.ORIENTATION_PORTRAIT)){
-            previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        }
-        else if(!isPortrait() && (config == Configuration.ORIENTATION_LANDSCAPE)){
-            previewImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        }
-        else{
-            previewImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        }
-        //previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
-      // previewImage.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
     }
 
 
@@ -447,6 +374,7 @@ public class CameraActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         Log.v(logTag, "onSaveInstanceState");
 
+
         // save on rotation changes only; do not save instance state when leaving the activity (or else the Parcel is too large?)]
         //----RESOLVED--------
         // TODO previewImageView should switch between centerCrop and centerInside when captured image is displayed
@@ -457,6 +385,7 @@ public class CameraActivity extends AppCompatActivity {
             outState.putParcelable("intent_handler", intentHandler);
             outState.putInt("configuration", ogConfiguration);
             outState.putBoolean("isImageCaptured", isImageCaptured);
+
         }
     }
 
@@ -520,11 +449,6 @@ public class CameraActivity extends AppCompatActivity {
                     Log.i(logTag, "onActivityResult got result with selectedImageUri");
                     intentHandler.updateFileResult(selectedImageUri);
                     isImageCaptured=true;
-                    try {
-                        handleFileRotation();
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
                     doViewPreviewFromFile();
                 }
             }

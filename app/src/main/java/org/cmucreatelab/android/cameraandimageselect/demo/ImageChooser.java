@@ -2,6 +2,8 @@ package org.cmucreatelab.android.cameraandimageselect.demo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 
 public class ImageChooser {
 
@@ -22,9 +24,11 @@ public class ImageChooser {
         Intent i = new Intent();
         i.setType("image/*");
         i.setAction(Intent.ACTION_GET_CONTENT);
+
         activity.startActivityForResult(
                 Intent.createChooser(i, "Select Picture"),
                 requestCode);
     }
+
 
 }
