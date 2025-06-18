@@ -176,9 +176,6 @@ public class CameraActivity extends AppCompatActivity {
 
     private void updateViewToDisplayPreview() {
         runOnUiThread(() -> {
-            //---RESOLVED----
-            // TODO we want to hide/show previewView when using the image/file picker
-            //---RESOLVED----
             // NOTE: do not hide PreviewView (avoid black scrren)
             //findViewById(R.id.previewView).setVisibility(View.GONE);
             findViewById(R.id.captureButton).setVisibility(View.INVISIBLE);
@@ -209,9 +206,7 @@ public class CameraActivity extends AppCompatActivity {
         this.cameraActivityState = CameraActivityState.VIEW_CAMERA;
         if (imageCapture == null) {
             Log.v(logTag, "doViewCamera found imageCapture is null, calling setupCamera()");
-            //---RESOLVED-----
-            // TODO we want to call this when camera flip button is clicked, but we don't want to call this when hitting the "no" button
-            //----RESOLVED-----
+            // call this when camera flip button is clicked, but we don't want to call this when hitting the "no" button
             setupCamera();
         } else {
             Log.v(logTag, "doViewCamera skipping setupCamera");
@@ -241,7 +236,6 @@ public class CameraActivity extends AppCompatActivity {
                 .skipMemoryCache(true)
                 .into(previewImage);
         updateViewToDisplayPreview();
-        //hideSpinner();
     }
 
 
@@ -253,8 +247,6 @@ public class CameraActivity extends AppCompatActivity {
             public void run() {
                 ImageView previewImage = findViewById(R.id.previewImageView);
                 previewImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                //updateScaleTypeAfterRotation();
-                //previewImage.setImageURI(intentHandler.imageUriFromFile);
                 Glide.with(CameraActivity.this)
                         .load(intentHandler.imageUriFromFile)
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -374,24 +366,19 @@ public class CameraActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         Log.v(logTag, "onSaveInstanceState");
 
+        outState.putString("camera_state", cameraActivityState.name());
+        outState.putInt("camera_lens", cameraSelectorLensFacing);
+        outState.putParcelable("intent_handler", intentHandler);
+        outState.putInt("configuration", ogConfiguration);
+        outState.putBoolean("isImageCaptured", isImageCaptured);
 
-        // save on rotation changes only; do not save instance state when leaving the activity (or else the Parcel is too large?)]
-        //----RESOLVED--------
-        // TODO previewImageView should switch between centerCrop and centerInside when captured image is displayed
-        //------RESOLVED--------
-        if (isChangingConfigurations()) {
-            outState.putString("camera_state", cameraActivityState.name());
-            outState.putInt("camera_lens", cameraSelectorLensFacing);
-            outState.putParcelable("intent_handler", intentHandler);
-            outState.putInt("configuration", ogConfiguration);
-            outState.putBoolean("isImageCaptured", isImageCaptured);
 
-        }
     }
 
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+
         super.onRestoreInstanceState(savedInstanceState);
         Log.v(logTag, "onRestoreInstanceState");
 
@@ -409,7 +396,7 @@ public class CameraActivity extends AppCompatActivity {
 
         if(isImageCaptured){
             updateScaleTypeAfterRotation();
-           handleCameraRotationSetup();
+            handleCameraRotationSetup();
         }
 
 
