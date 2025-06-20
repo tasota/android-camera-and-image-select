@@ -16,17 +16,40 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-<!--        <Button-->
-<!--            android:id="@+id/buttonActivity"-->
-<!--            android:text="Launch Activity for Image"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content" />-->
+        <Button
+            android:id="@+id/buttonActivity"
+            android:text="Crop Image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <ImageView
-            android:id="@+id/imageSelectorView"
+            android:id="@+id/imageRectView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:visibility="gone"
             />
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/imageSelectorView"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                />
+
+            <com.zigis.segmentedarcview.SegmentedArcView
+                android:id="@+id/segmented_arc_view"
+                android:layout_width="125dp"
+                android:layout_height="125dp"
+                app:sav_useCustomSweepAngles="true"
+                app:sav_segmentThickness="10dp"
+                app:sav_segmentSeparationAngle="0"
+                app:sav_startAngle="270" />
+
+        </FrameLayout>
+
 
     </LinearLayout>
 
