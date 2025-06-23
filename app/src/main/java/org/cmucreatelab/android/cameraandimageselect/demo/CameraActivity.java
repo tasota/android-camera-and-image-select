@@ -255,6 +255,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void finishActivityWithResult(int resultCode, Uri resultUri) {
+       // Intent resultIntent = new Intent(this, UCropperActivity.class);
         Intent resultIntent = new Intent(this, CircleSelectorActivity.class);
 
         if (resultUri != null) {

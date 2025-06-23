@@ -13,24 +13,26 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:layout_margin="20dp"
+        android:gravity="center"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <Button
-            android:id="@+id/buttonActivity"
+            android:id="@+id/cropActivity"
             android:text="Crop Image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <ImageView
-            android:id="@+id/imageRectView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone"
-            />
+
         <FrameLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/imageRectView"
+                android:layout_width="320dp"
+                android:layout_height="320dp"
+                />
 
             <de.hdodenhof.circleimageview.CircleImageView
                 xmlns:app="http://schemas.android.com/apk/res-auto"

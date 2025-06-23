@@ -26,7 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CircleSelectorActivity extends AppCompatActivity {
+    public static final String RESULT_INTENT_EXTRA_IMAGE_URI = "image_uri";
+
     private ImageView imageView;
+    private Uri resultUri;
 
     private static String logTag = "selector-activity";
 
@@ -70,6 +73,7 @@ public class CircleSelectorActivity extends AppCompatActivity {
         Log.v(logTag, "loading Image");
         Intent result = getIntent();
         Uri imageUri= result.getParcelableExtra(CameraActivity.RESULT_INTENT_EXTRA_IMAGE_URI);
+        resultUri = imageUri;
         //imageView.setImageURI(imageUri);
         Glide.with(this)
                 .load(imageUri)
@@ -93,6 +97,16 @@ public class CircleSelectorActivity extends AppCompatActivity {
 
     }
 
+    private void initializeOnClickListeners(){
+         findViewById(R.id.cropActivity).setOnClickListener(v ->  {
+             Log.v(logTag, "buttonActivity onClick");
+             Intent intent = new Intent(CircleSelectorActivity.this, UCropperActivity.class);
+             intent.putExtra(RESULT_INTENT_EXTRA_IMAGE_URI, resultUri);
+
+             startActivity(intent);
+         });
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +120,7 @@ public class CircleSelectorActivity extends AppCompatActivity {
             return insets;
         });
 
+        initializeOnClickListeners();
         this.imageView = findViewById(R.id.imageSelectorView);
 //        loadImageFromResult();
 //        buildSegmentedBorder();

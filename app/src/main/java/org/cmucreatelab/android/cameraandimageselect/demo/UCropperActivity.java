@@ -37,6 +37,7 @@ public class UCropperActivity extends AppCompatActivity {
         destinationUri = new StringBuilder(UUID.randomUUID().toString()).append(".jpeg").toString();
 
         UCrop.Options options = new UCrop.Options();
+        options.setCircleDimmedLayer(true);
         UCrop.of(imageUri, Uri.fromFile(new File(getCacheDir(), destinationUri)))
                 .withOptions(options)
 //                .withAspectRatio(16,16)
