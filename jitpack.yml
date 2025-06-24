@@ -1,8 +1,5 @@
 jdk:
-  - openjdk11
+  - openjdk17
 
 android:
-  module: mylibrary  # <-- replace with your actual library module name
-
-before_install:
-  - ./scripts/prepareJitpackEnvironment.sh
+  module: mylibrary
