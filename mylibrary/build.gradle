@@ -62,7 +62,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'org.cmucreatelab.android'
                 artifactId = 'mylibrary'
-                version = '1.0.0'
+                version = '1.2.1'
             }
         }
     }
