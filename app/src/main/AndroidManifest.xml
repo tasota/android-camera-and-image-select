@@ -29,7 +29,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".CameraActivity"
+            android:name="org.cmucreatelab.android.mylibrary.CameraActivity"
             android:exported="true">
         </activity>
 

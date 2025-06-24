@@ -1,9 +1,7 @@
-package org.cmucreatelab.android.cameraandimageselect.demo;
+package org.cmucreatelab.android.mylibrary;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
 
 public class ImageChooser {
 

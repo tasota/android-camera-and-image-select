@@ -1,13 +1,9 @@
-package org.cmucreatelab.android.cameraandimageselect.demo;
+package org.cmucreatelab.android.mylibrary;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import java.io.ByteArrayOutputStream;
 
 public class CameraActivityIntentHandler implements Parcelable {
 
