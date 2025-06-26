@@ -55,10 +55,6 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 }
 
-tasks.register('sourcesJar', Jar) {
-    archiveClassifier.set('sources')
-    from android.sourceSets.main.java.srcDirs
-}
 
 afterEvaluate {
     publishing {
@@ -67,9 +63,9 @@ afterEvaluate {
                 from components.release
                 groupId = 'org.cmucreatelab.android'
                 artifactId = 'mylibrary'
-                version = '1.2.4'
+                version = '1.2.5'
 
-                artifact(tasks.named("sourcesJar").get())            }
+            }
         }
     }
 }
