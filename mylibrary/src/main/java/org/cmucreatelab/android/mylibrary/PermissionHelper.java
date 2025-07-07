@@ -15,11 +15,8 @@ public class PermissionHelper {
     public static final int PERMISSION_REQUEST_CODE = 123;
 
     public static String[] getRequiredPermissions(){
-//            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-//            android.Manifest.permission.CAMERA,
-//            android.Manifest.permission.RECORD_AUDIO
-//            // Add WRITE_EXTERNAL_STORAGE if targeting SDK < 29
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+//
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
             return new String[] {
             Manifest.permission.CAMERA,
             Manifest.permission.READ_MEDIA_IMAGES,

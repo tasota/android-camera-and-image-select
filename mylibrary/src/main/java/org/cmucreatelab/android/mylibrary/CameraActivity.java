@@ -441,6 +441,7 @@ public class CameraActivity extends AppCompatActivity {
         if (PermissionHelper.hasAllPermissions(this)) {
             initializeCameraFeatures();
         } else {
+            PermissionHelper.requestAllPermissions(this);
             Log.w(logTag, "Missing permissions in onResume");
         }
     }
