@@ -226,6 +226,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     private void doViewPreviewFromFile() {
+        Log.v(logTag, "doViewPreviewFromFile");
         isImageCaptured = true;
         this.cameraActivityState = CameraActivityState.VIEW_PREVIEW_FROM_FILE;
         runOnUiThread(new Runnable() {
@@ -346,6 +347,12 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
+    private void initializeCameraFeatures() {
+        initializeViewOnClickListeners();
+        updateActivityWithCameraState();
+    }
+
+
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
@@ -389,26 +396,64 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+//    @Override
+//    protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        Log.v(logTag, "onCreate");
+//        setContentView(R.layout.activity_camera);
+//
+//        // TODO handle run-time permissions (here, or onResume?) (note: this is already handled in StudentUpdateAbstractActivity)
+//
+//        this.cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+//
+//        this.intentHandler = new CameraActivityIntentHandler();
+//    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(logTag, "onCreate");
         setContentView(R.layout.activity_camera);
 
-        // TODO handle run-time permissions (here, or onResume?) (note: this is already handled in StudentUpdateAbstractActivity)
         this.cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-
         this.intentHandler = new CameraActivityIntentHandler();
+
+        if (!PermissionHelper.hasAllPermissions(this)) {
+            PermissionHelper.requestAllPermissions(this);
+        } else {
+            initializeCameraFeatures();
+        }
     }
 
 
+
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        Log.v(logTag, "onResume");
+//        initializeViewOnClickListeners();
+//        updateActivityWithCameraState();
+//    }
     @Override
     protected void onResume() {
         super.onResume();
         Log.v(logTag, "onResume");
-        initializeViewOnClickListeners();
-        updateActivityWithCameraState();
+
+        if (PermissionHelper.hasAllPermissions(this)) {
+            initializeCameraFeatures();
+        } else {
+            Log.w(logTag, "Missing permissions in onResume");
+        }
     }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (PermissionHelper.handlePermissionResult(this, requestCode, grantResults)) {
+            initializeCameraFeatures();
+        }
+    }
+
+
 
 
     @Override
