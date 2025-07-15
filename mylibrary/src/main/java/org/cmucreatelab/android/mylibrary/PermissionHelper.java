@@ -1,9 +1,7 @@
 package org.cmucreatelab.android.mylibrary;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -14,30 +12,16 @@ public class PermissionHelper {
 
     public static final int PERMISSION_REQUEST_CODE = 123;
 
-    public static String[] getRequiredPermissions(){
-//            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-//            android.Manifest.permission.CAMERA,
-//            android.Manifest.permission.RECORD_AUDIO
-//            // Add WRITE_EXTERNAL_STORAGE if targeting SDK < 29
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            return new String[] {
-            Manifest.permission.CAMERA,
-            Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_VIDEO
-        };
-        } else {
-            return new String[] {
-            Manifest.permission.CAMERA,
-            Manifest.permission.READ_EXTERNAL_STORAGE
-            };
-        }
-
+    public static String[] requiredPermissions = new String[] {
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.RECORD_AUDIO
+            // Add WRITE_EXTERNAL_STORAGE if targeting SDK < 29
     };
 
     public static boolean hasAllPermissions(Activity activity) {
-        for (String permission : getRequiredPermissions()) {
+        for (String permission : requiredPermissions) {
             if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
-                Log.w("camera-activity", "Missing permission: " + permission);
                 return false;
             }
         }
@@ -45,19 +29,19 @@ public class PermissionHelper {
     }
 
     public static void requestAllPermissions(Activity activity) {
-        ActivityCompat.requestPermissions(activity, getRequiredPermissions(), PERMISSION_REQUEST_CODE);
+        ActivityCompat.requestPermissions(activity, requiredPermissions, PERMISSION_REQUEST_CODE);
     }
 
     public static boolean handlePermissionResult(Activity activity, int requestCode, int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             for (int result : grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(activity, "Permissions are required to continue.", Toast.LENGTH_LONG).show();
-                    Log.e("camera-activity", "One or more permissions denied");
+                    Toast.makeText(activity, "All permissions are required for this feature.", Toast.LENGTH_LONG).show();
+                    Log.e("PermissionHelper", "Permission denied");
                     return false;
                 }
             }
-            Log.i("camera-activity", "All permissions granted");
+            Log.d("PermissionHelper", "All permissions granted");
             return true;
         }
         return false;
