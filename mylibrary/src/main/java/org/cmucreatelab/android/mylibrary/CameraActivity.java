@@ -41,6 +41,12 @@ import java.util.concurrent.Executor;
 public class CameraActivity extends AppCompatActivity {
 
     public static final String RESULT_INTENT_EXTRA_IMAGE_URI = "image_uri";
+    //for MindfulNest
+    public static final String EXTRA_CLASSROOM_NAME = "classroom_name";
+    public static final String EXTRA_STUDENT = "student";
+    private String classroomName;
+    private String studentUuid;
+
 
     public enum CameraActivityState {
         VIEW_CAMERA,
@@ -249,6 +255,9 @@ public class CameraActivity extends AppCompatActivity {
         if (resultUri != null) {
             resultIntent.putExtra(RESULT_INTENT_EXTRA_IMAGE_URI, resultUri);
         }
+
+        resultIntent.putExtra(EXTRA_STUDENT, studentUuid);
+        resultIntent.putExtra(EXTRA_CLASSROOM_NAME, classroomName);
         setResult(resultCode, resultIntent);
         finish();
     }
@@ -399,6 +408,11 @@ public class CameraActivity extends AppCompatActivity {
         this.cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
         this.intentHandler = new CameraActivityIntentHandler();
+
+        if(getIntent().getStringExtra(EXTRA_CLASSROOM_NAME) != null && getIntent().getStringExtra(EXTRA_STUDENT) != null) {
+            this.classroomName = getIntent().getStringExtra(EXTRA_CLASSROOM_NAME);
+            this.studentUuid = getIntent().getStringExtra(EXTRA_STUDENT);
+        }
     }
 
 
