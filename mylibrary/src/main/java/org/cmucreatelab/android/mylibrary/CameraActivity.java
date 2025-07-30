@@ -46,7 +46,7 @@ public class CameraActivity extends AppCompatActivity {
 
     public static final String RESULT_INTENT_EXTRA_IMAGE_URI = "image_uri";
     private static final int REQUEST_CAMERA_PERMISSION = 100;
-    private boolean fromFiles;
+    private boolean fromFilesOrVertical;
 
     //for MindfulNest
     public static final String EXTRA_CLASSROOM_NAME = "classroom_name";
@@ -153,7 +153,7 @@ public class CameraActivity extends AppCompatActivity {
 
                 ImageView previewImage = findViewById(R.id.previewImageView);
                 previewImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                fromFiles = false;
+                fromFilesOrVertical = false;
                 doViewPreviewFromCamera();
             }
 
@@ -264,9 +264,12 @@ public class CameraActivity extends AppCompatActivity {
             resultIntent.putExtra(RESULT_INTENT_EXTRA_IMAGE_URI, resultUri);
         }
 
+        if(ogConfiguration == Configuration.ORIENTATION_PORTRAIT) {
+            fromFilesOrVertical = true;
+        }
         resultIntent.putExtra(EXTRA_STUDENT, studentUuid);
         resultIntent.putExtra(EXTRA_CLASSROOM_NAME, classroomName);
-        resultIntent.putExtra("fromFiles", fromFiles);
+        resultIntent.putExtra("fromFiles", fromFilesOrVertical);
         setResult(resultCode, resultIntent);
         finish();
     }
@@ -471,7 +474,7 @@ public class CameraActivity extends AppCompatActivity {
                     Log.i(logTag, "onActivityResult got result with selectedImageUri");
                     intentHandler.updateFileResult(selectedImageUri);
                     isImageCaptured=true;
-                    fromFiles = true;
+                    fromFilesOrVertical = true;
                     doViewPreviewFromFile();
                 }
             }
